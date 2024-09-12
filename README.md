@@ -61,7 +61,7 @@ Se realizó un análisis exploratorio para identificar tendencias, patrones y co
 
 ## Enlaces a Documentos de Proyecto
 
-- [Presentación del Proyecto](ENLACE_A_LA_PRESENTACION)
+- [Presentación del Proyecto](https://docs.google.com/presentation/d/1ZYJY4tBGUaCTmSygnIG78rQ5SeSlzXHR/edit?usp=sharing&ouid=103375397572557041683&rtpof=true&sd=true)
 
 ## Autoras
 
