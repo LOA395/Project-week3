@@ -1,4 +1,9 @@
+# Importar librerías
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
 
 # Diccionario de códigos de países a nombres completos
 country_dict = {
@@ -52,6 +57,15 @@ countries_to_keep = [
     'Luxembourg', 'Malta', 'Netherlands', 'Norway', 'Poland',
     'Portugal', 'Romania', 'Slovakia', 'Slovenia', 'Spain', 'Sweden'    
 ]
+
+# Definir paleta de colores pastel
+colores = {
+    'IDH': '#87CEEB',  # skyblue
+    'Air_pollution_level': '#FFB6C1',  # lightpink
+    'Recycling Rate': '#90EE90',  # lightgreen
+    'CO2_Emissions': '#FFD700',  # gold
+    'Total Waste %': '#D8BFD8'  # thistle (un color pastel púrpura)
+}
 
 def load_csv_data(filepath):
     """
@@ -379,3 +393,157 @@ def agregar_porcentajes(df, column):
     df[column + '%'] = ((df[column] / total_por_año) * 100).round(2)
     
     return df
+
+# Visualizar matriz de correlación
+def visualizar_matriz_correlacion(data):
+    """
+    Visualiza la matriz de correlación entre variables en 2022 mediante un mapa de calor.
+    
+    Parameters:
+        data (DataFrame): Datos de 2022 que contienen las variables para calcular la correlación.
+    """
+    correlation_matrix = data[['Air_pollution_level', 'CO2_Emissions', 'recycling_rate', 'IDH']].corr()
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1, center=0, fmt=".2f")
+    plt.title('Matriz de Correlación entre Variables (2022)')
+    plt.show()
+
+
+# Combinar y limpiar datos
+def combinar_datos(data_annual, data_bianual):
+    """
+    Combina los datos anuales sobre tasas de reciclaje con los datos bianuales sobre generación de residuos.
+    También interpola los valores faltantes en la columna 'Total_waste%'.
+    
+    Parameters:
+        data_annual (DataFrame): Datos anuales sobre tasas de reciclaje.
+        data_bianual (DataFrame): Datos bianuales sobre generación de residuos.
+        
+    Returns:
+        combined_data (DataFrame): Datos combinados y limpiados listos para análisis.
+    """
+    waste_data_relevant = data_bianual[['Country', 'Year', 'Total_waste', 'Total_waste%']]
+    combined_data = pd.merge(data_annual, waste_data_relevant, on=['Country', 'Year'], how='left')
+    combined_data['Total_waste%'] = combined_data['Total_waste%'].interpolate()
+    return combined_data
+
+
+# Visualizar tendencias por país
+def visualizar_tendencias_por_pais(combined_data):
+    """
+    Visualiza las tendencias de contaminación del aire, emisiones de CO2, tasa de reciclaje y porcentaje de residuos totales por país a lo largo del tiempo.
+    
+    Parameters:
+        combined_data (DataFrame): Datos combinados que incluyen tasas de reciclaje, generación de residuos, contaminación del aire y emisiones de CO2.
+    """
+    countries = combined_data['Country'].unique()
+    num_paises = len(countries)
+    num_filas = (num_paises + 1) // 2  # Agrupar en pares
+    
+    fig, axes = plt.subplots(num_filas, 2, figsize=(14, 5 * num_filas), sharex=True)
+    axes = axes.flatten()  # Convertir a lista en caso de un solo gráfico
+    
+    for i, country in enumerate(countries):
+        subset = combined_data[combined_data['Country'] == country]
+        ax = axes[i]
+        ax.plot(subset['Year'], subset['Air_pollution_level'], marker='o', color=colores['Air_pollution_level'], label='Air Pollution Level')
+        ax.plot(subset['Year'], subset['CO2_Emissions'], marker='o', color=colores['CO2_Emissions'], label='CO2 Emissions')
+        ax.plot(subset['Year'], subset['recycling_rate'], marker='o', color=colores['Recycling Rate'], label='Recycling Rate')
+        ax.plot(subset['Year'], subset['Total_waste%'], marker='o', color=colores['Total Waste %'], label='Total Waste %')
+
+        ax.set_title(f'{country} - Environmental Data Over Time(2013-2022)')
+        ax.set_xlabel('Year')
+        ax.set_ylabel('Normalized Values')
+        ax.legend(loc='upper left')
+        ax.set_xticks(subset['Year'])
+        ax.set_xticklabels(subset['Year'].astype(str), rotation=45)
+    
+    plt.tight_layout()
+    plt.show()
+
+
+
+# Comparar variables ambientales e IDH
+def comparar_variables_idh(data_2022):
+    """
+    Compara el IDH, el nivel de contaminación del aire, la tasa de reciclaje y las emisiones de CO2 para cada país en 2022 mediante un gráfico de barras.
+    
+    Parameters:
+        data_2022 (DataFrame): Datos de 2022 que incluyen IDH, nivel de contaminación del aire, tasa de reciclaje y emisiones de CO2.
+    """
+    indices = np.arange(len(data_2022['Country']))
+    width = 0.2
+
+    plt.figure(figsize=(14, 8))
+    plt.bar(indices - 1.5 * width, data_2022['IDH'] * 100, width, label='IDH (Escalado x100)', color=colores['IDH'])
+    plt.bar(indices - 0.5 * width, data_2022['Air_pollution_level'], width, label='Nivel de Contaminación del Aire', color=colores['Air_pollution_level'])
+    plt.bar(indices + 0.5 * width, data_2022['recycling_rate'], width, label='Tasa de Reciclaje', color=colores['Recycling Rate'])
+    plt.bar(indices + 1.5 * width, data_2022['CO2_Emissions%'], width, label='Emisiones de CO2 (%)', color=colores['CO2_Emissions'])
+
+    plt.xlabel('País')
+    plt.ylabel('Valores')
+    plt.title('Comparación del IDH y Variables Ambientales por País en 2022')
+    plt.xticks(indices, data_2022['Country'], rotation=90)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+# Relación entre IDH y Contaminación del Aire
+def relacion_idh_contaminacion(data_2022):
+    """
+    Muestra la relación entre el IDH y el nivel de contaminación del aire para cada país en 2022 mediante un gráfico combinado de barras y líneas.
+    
+    Parameters:
+        data_2022 (DataFrame): Datos de 2022 que incluyen IDH y nivel de contaminación del aire.
+    """
+    plt.figure(figsize=(14, 6))
+    plt.bar(data_2022['Country'], data_2022['Air_pollution_level'], color=colores['Air_pollution_level'], label='Nivel de Contaminación del Aire')
+    plt.plot(data_2022['Country'], data_2022['IDH'] * 100, color=colores['IDH'], marker='o', linestyle='-', linewidth=2, label='IDH (Escalado x100)')
+    plt.xlabel('País')
+    plt.ylabel('Valores')
+    plt.title('Relación entre IDH y Nivel de Contaminación del Aire por País en 2022')
+    plt.xticks(rotation=90)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+# Relación entre IDH y Tasa de Reciclaje
+def relacion_idh_reciclaje(data_2022):
+    """
+    Muestra la relación entre el IDH y la tasa de reciclaje para cada país en 2022 mediante un gráfico combinado de barras y líneas.
+    
+    Parameters:
+        data_2022 (DataFrame): Datos de 2022 que incluyen IDH y tasa de reciclaje.
+    """
+    plt.figure(figsize=(14, 6))
+    plt.bar(data_2022['Country'], data_2022['recycling_rate'], color=colores['Recycling Rate'], label='Tasa de Reciclaje')
+    plt.plot(data_2022['Country'], data_2022['IDH']*100, color=colores['IDH'], marker='o', linestyle='-', linewidth=2, label='IDH (Escalado x100)')
+    plt.xlabel('País')
+    plt.ylabel('Valores')
+    plt.title('Relación entre IDH y la Tasa de Reciclaje por País en 2022')
+    plt.xticks(rotation=90)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+# Relación entre IDH y Emisiones de CO2
+def relacion_idh_co2(data_2022):
+    """
+    Muestra la relación entre el IDH y las emisiones de CO2 para cada país en 2022 mediante un gráfico combinado de barras y líneas.
+    
+    Parameters:
+        data_2022 (DataFrame): Datos de 2022 que incluyen IDH y emisiones de CO2.
+    """
+    plt.figure(figsize=(14, 6))
+    plt.bar(data_2022['Country'], data_2022['CO2_Emissions%'], color=colores['CO2_Emissions'], label='Emisiones de CO2')
+    plt.plot(data_2022['Country'], data_2022['IDH'] * 10, color=colores['IDH'], marker='o', linestyle='-', linewidth=2, label='IDH (Escalado x10)')
+    plt.xlabel('País')
+    plt.ylabel('Valores')
+    plt.title('Relación entre IDH y Emisiones de CO2 por País en 2022')
+    plt.xticks(rotation=90)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
