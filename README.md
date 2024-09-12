@@ -63,4 +63,10 @@ Se realizó un análisis exploratorio para identificar tendencias, patrones y co
 
 - [Presentación del Proyecto](ENLACE_A_LA_PRESENTACION)
 
+## Autoras
+
+Este proyecto fue realizado por:
+- Elena Vilkoyt
+- Laura Ortiz
+
 
