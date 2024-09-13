@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import gzip
 
 
 # Diccionario de códigos de países a nombres completos
@@ -78,6 +79,25 @@ def load_csv_data(filepath):
     pd.DataFrame: Un DataFrame con los datos cargados del archivo CSV.
     """
     return pd.read_csv(filepath)
+
+def load_csv_data_gzip(filepath):
+    """
+    Carga datos desde un archivo CSV comprimido.
+
+    Parámetros:
+    filepath (str): La ruta del archivo CSV comprimido que se desea cargar.
+
+    Retorna:
+    pd.DataFrame: Un DataFrame con los datos cargados del archivo CSV comprimido.
+    """
+
+    # Ruta del archivo GZIP
+    gzip_file_path = filepath
+
+    # Leer directamente el archivo CSV comprimido con pandas
+    with gzip.open(gzip_file_path, 'rt') as f:
+        df = pd.read_csv(f)
+    return df
 
 def load_excel_data(filepath, sheet_name):
     """
@@ -230,7 +250,7 @@ def process_waste_generation_data(filepath):
     Retorna:
     pd.DataFrame: El DataFrame procesado con datos de generación de residuos, filtrado, renombrado y agrupado.
     """
-    df = load_csv_data(filepath)
+    df = load_csv_data_gzip(filepath)
     df = filter_by_year(df, 2013, 2022)
     df = df[df['waste'] == 'TOTAL']
     df = select_columns(df, ['geo', 'TIME_PERIOD', 'OBS_VALUE'])
